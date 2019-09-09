@@ -381,3 +381,55 @@ function Merge-HashTables
     $HashTableNew = $HashTableOld + $HashTableNew
     return $HashTableNew
 }
+
+function Publish-DevAppInstance
+{
+    Param
+    (
+        [Parameter(
+           Position=0, 
+           Mandatory=$true, 
+           ValueFromPipeline=$true)
+        ]
+        $profile
+    )
+
+    $profile | % { Copy-ServiceFabricApplicationPackage -ApplicationPackagePath .\pkg\Debug\ -ApplicationPackagePathInImageStore $_.ApplicationTypeName}
+    $profile | % { Register-ServiceFabricApplicationType -ApplicationPathInImageStore $_.ApplicationTypeName}
+    $profile | % { New-ServiceFabricApplication -ApplicationName $_.ApplicationName -ApplicationTypeName $_.ApplicationTypeName -ApplicationTypeVersion $_.ApplicationTypeVersion -ApplicationParameter $_.ApplicationParameters}
+    $profile | % { Remove-ServiceFabricApplicationPackage -ApplicationPackagePathInImageStore $_.ApplicationTypeName }
+
+}
+
+function Remove-DevAppInstance
+{
+    Param
+    (
+        [Parameter(
+           Position=0, 
+           Mandatory=$true, 
+           ValueFromPipeline=$true)
+        ]
+        $profile    
+    )
+
+    $prof | % {Remove-ServiceFabricApplication -ApplicationName $_.ApplicationName -Force}
+    
+    $prof | % {Unregister-ServiceFabricApplicationType -ApplicationTypeName $_.ApplicationTypeName -ApplicationTypeVersion $_.ApplicationTypeVersion -Force}
+}
+
+function Republish-DevAppInstance
+{
+    Param
+    (
+        [Parameter(
+           Position=0, 
+           Mandatory=$true, 
+           ValueFromPipeline=$true)
+        ]
+        $profile    
+    )
+
+    $profile | Remove-DevAppInstance 
+    $profile | Publish-DevAppInstance 
+}

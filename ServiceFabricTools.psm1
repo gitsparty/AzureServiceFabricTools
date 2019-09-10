@@ -413,9 +413,9 @@ function Remove-DevAppInstance
         $profile    
     )
 
-    $prof | % {Remove-ServiceFabricApplication -ApplicationName $_.ApplicationName -Force}
+    $profile | % {Remove-ServiceFabricApplication -ApplicationName $_.ApplicationName -Force}
     
-    $prof | % {Unregister-ServiceFabricApplicationType -ApplicationTypeName $_.ApplicationTypeName -ApplicationTypeVersion $_.ApplicationTypeVersion -Force}
+    $profile | % {Unregister-ServiceFabricApplicationType -ApplicationTypeName $_.ApplicationTypeName -ApplicationTypeVersion $_.ApplicationTypeVersion -Force}
 }
 
 function Republish-DevAppInstance
@@ -432,4 +432,31 @@ function Republish-DevAppInstance
 
     $profile | Remove-DevAppInstance 
     $profile | Publish-DevAppInstance 
+}
+
+function Upgrade-DevAppInstance
+{
+    Param
+    (
+        [Parameter(
+           Position=0, 
+           Mandatory=$true, 
+           ValueFromPipeline=$true)
+        ]
+        $profile
+    )
+
+    $upgradeParams = $profile.UpgradeDeployment.Parameters
+    $upgradeParams["ApplicationName"] = $profile.ApplicationName
+    $upgradeParams["ApplicationTypeVersion"] = $profile.ApplicationTypeVersion
+    $upgradeParams["ApplicationParameter"] = $profile.ApplicationParameters
+
+    $profile | % { Copy-ServiceFabricApplicationPackage -ApplicationPackagePath .\pkg\Debug\ -ImageStoreConnectionString $imageStore -ApplicationPackagePathInImageStore $_.ApplicationTypeName}
+
+    $profile | % { Register-ServiceFabricApplicationType -ApplicationPathInImageStore $_.ApplicationTypeName}
+
+    Start-ServiceFabricApplicationUpgrade @upgradeParam
+
+    $profile | % { Remove-ServiceFabricApplicationPackage -ImageStoreConnectionString $imageStore -ApplicationPackagePathInImageStore $_.ApplicationTypeName }
+
 }

@@ -394,6 +394,8 @@ function Publish-DevAppInstance
         $profile
     )
 
+    $c = $profile.ClusterConnectionParameters
+    connect-servicefabriccluster @c
     $profile | % { Copy-ServiceFabricApplicationPackage -ApplicationPackagePath .\pkg\Debug\ -ApplicationPackagePathInImageStore $_.ApplicationTypeName}
     $profile | % { Register-ServiceFabricApplicationType -ApplicationPathInImageStore $_.ApplicationTypeName}
     $profile | % { New-ServiceFabricApplication -ApplicationName $_.ApplicationName -ApplicationTypeName $_.ApplicationTypeName -ApplicationTypeVersion $_.ApplicationTypeVersion -ApplicationParameter $_.ApplicationParameters}
@@ -412,6 +414,9 @@ function Remove-DevAppInstance
         ]
         $profile    
     )
+
+    $c = $profile.ClusterConnectionParameters
+    connect-servicefabriccluster @c
 
     $profile | % {Remove-ServiceFabricApplication -ApplicationName $_.ApplicationName -Force}
     
@@ -445,6 +450,9 @@ function Upgrade-DevAppInstance
         ]
         $profile
     )
+
+    $c = $profile.ClusterConnectionParameters
+    connect-servicefabriccluster @c
 
     $upgradeParams = $profile.UpgradeDeployment.Parameters
     $upgradeParams["ApplicationName"] = $profile.ApplicationName

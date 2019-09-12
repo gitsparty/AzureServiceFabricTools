@@ -455,15 +455,15 @@ function Upgrade-DevAppInstance
     connect-servicefabriccluster @c
 
     $upgradeParams = $profile.UpgradeDeployment.Parameters
-    $upgradeParams["ApplicationName"] = $profile.ApplicationName
+    $upgradeParams["ApplicationName"] = [uri]$profile.ApplicationName
     $upgradeParams["ApplicationTypeVersion"] = $profile.ApplicationTypeVersion
     $upgradeParams["ApplicationParameter"] = $profile.ApplicationParameters
 
-    $profile | % { Copy-ServiceFabricApplicationPackage -ApplicationPackagePath .\pkg\Debug\ -ImageStoreConnectionString $imageStore -ApplicationPackagePathInImageStore $_.ApplicationTypeName}
+    $profile | % { Copy-ServiceFabricApplicationPackage -ApplicationPackagePath .\pkg\Debug\ -ApplicationPackagePathInImageStore $_.ApplicationTypeName}
 
     $profile | % { Register-ServiceFabricApplicationType -ApplicationPathInImageStore $_.ApplicationTypeName}
 
-    Start-ServiceFabricApplicationUpgrade @upgradeParam
+    Start-ServiceFabricApplicationUpgrade @upgradeParams
 
     $profile | % { Remove-ServiceFabricApplicationPackage -ImageStoreConnectionString $imageStore -ApplicationPackagePathInImageStore $_.ApplicationTypeName }
 
